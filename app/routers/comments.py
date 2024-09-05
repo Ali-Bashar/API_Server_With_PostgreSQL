@@ -5,3 +5,6 @@ from sqlalchemy.orm import Session
 from .. import database, models, schemas
 from . import Oauth2
 
+router = APIRouter(tags=['comments'], prefix='/comments')
+
+router.post()
