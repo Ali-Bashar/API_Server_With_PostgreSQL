@@ -7,4 +7,6 @@ from . import Oauth2
 
 router = APIRouter(tags=['comments'], prefix='/comments')
 
-router.post()
+router.post('/')
+def commenting(db:Session=Depends(database.get_db)):
+    pass 
