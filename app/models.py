@@ -42,7 +42,7 @@ class Comment(Base):
     __tablename__ = "Comments"
     comment = Column(String, nullable = False)
     user_id = Column(Integer, ForeignKey(column='User.user_id', ondelete="CASCADE"),primary_key=True)
-    post_id = Column(Integer, ForeignKey(column='Post.post_id',ondelete="CASCADE"),primary_key=True)
+    post_id = Column(Integer, ForeignKey(column='Posts.post_id',ondelete="CASCADE"),primary_key=True)
     created_at = Column(TIMESTAMP(timezone=True),server_default=text('NOW()'),nullable=False)
 
     user = relationship("User")
