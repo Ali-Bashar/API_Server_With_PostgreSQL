@@ -9,4 +9,4 @@ router = APIRouter(tags=['comments'], prefix='/comments')
 
 router.post('/')
 def commenting(db:Session=Depends(database.get_db)):
-    pass 
+    pass
