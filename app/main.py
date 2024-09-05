@@ -23,10 +23,6 @@ app.add_middleware(
 )
 
 
-# we set the database migration tool so we no longer need this command right down here
-# models.Base.metadata.create_all(bind=engine)
-
-
 app.include_router(items.router)
 app.include_router(users.router)
 app.include_router(auth.router)
