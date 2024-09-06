@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import func
 from .. import database, models, schemas
 from . import Oauth2
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -13,9 +14,16 @@ router = APIRouter(tags=["Posts"], prefix="/posts")
 def get_posts(db: Session = Depends(database.get_db),
               limit:int=100,skip:int=0,search:Optional[str]=""):
     
+    commentAlias = aliased(models.Comment)
+    
     posts = db.query(
-            models.Post, func.count(models.Vote.post_id).label("Votes")
-        ).join(
+            models.Post, func.count(models.Vote.post_id).label("Votes"),
+            func.array_agg(func.json_build_object(
+                'comment',commentAlias.comment,
+                'user_id',commentAlias.user_id,
+                'created_at',commentAlias.created_at
+            )).label('comments')
+        ).outerjoin(
             models.Vote,models.Vote.post_id == models.Post.post_id,isouter=True
         ).group_by(
             models.Post.post_id
@@ -26,7 +34,16 @@ def get_posts(db: Session = Depends(database.get_db),
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No posts available")
 
-    return posts
+    result = [
+        schemas.PostOutWithComments(
+            post=schemas.PostOut.from_orm(post),
+            votes=post.votes,
+            comments=[schemas.CommentOut(**comment) for comment in post.comments] if post.comments else []
+        )
+        for post in posts
+    ]
+
+    return result
 
 @router.get("/{id}",status_code=status.HTTP_200_OK,response_model=schemas.PostOutWithVotes)
 def get_post_id(id:int,db: Session=Depends(database.get_db),

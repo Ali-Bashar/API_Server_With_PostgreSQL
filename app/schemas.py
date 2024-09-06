@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel,EmailStr
 import datetime
 from pydantic.types import conint
-from typing import Optional
+from typing import Optional, List
 
 class Item(BaseModel):
     item_name:str
@@ -92,6 +92,15 @@ class PostOutWithVotes(BaseModel):
         from_attributes = True
         arbitrary_types_allowed = True
 
-class Comments(BaseModel):
-    post_id: int
+class CommentOut(BaseModel):
     comment: str
+    user_id: int
+    created_at: datetime.datetime
+
+class PostOutWithVotesAndComments(PostOut):
+    votes: int
+    comments: List[CommentOut] = []
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True

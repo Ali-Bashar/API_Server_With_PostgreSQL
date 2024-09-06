@@ -8,7 +8,7 @@ from . import Oauth2
 router = APIRouter(tags=['comments'], prefix='/comments')
 
 @router.post('/')
-def commenting(comment:schemas.Comments,db:Session=Depends(database.get_db),
+def commenting(comment:schemas.CommentOut,db:Session=Depends(database.get_db),
                current_user: str = Depends(Oauth2.get_current_user)):
     
     post_id = db.query(models.Post).filter(models.Post.post_id == comment.post_id).first()
