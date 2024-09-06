@@ -7,7 +7,7 @@ from . import Oauth2
 
 router = APIRouter(tags=['comments'], prefix='/comments')
 
-router.post('/')
+@router.post('/')
 def commenting(comment:schemas.Comments,db:Session=Depends(database.get_db),
                current_user: str = Depends(Oauth2.get_current_user)):
     
@@ -23,8 +23,15 @@ def commenting(comment:schemas.Comments,db:Session=Depends(database.get_db),
     if comment_found:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=f"User with user id:{current_user.user_id} posted comment already")
     
-    new_comment = models.Comment(comment.comment, user_id = current_user.user_id)
+    new_comment = models.Comment(
+    comment=comment.comment,
+    post_id=comment.post_id,
+    user_id=current_user.user_id
+    )
+
     db.add(new_comment)
     db.commit()
+    db.refresh(new_comment)
+
 
     return {"message":"successfully added comment"}
