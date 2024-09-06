@@ -24,7 +24,7 @@ def commenting(comment:schemas.Comments,db:Session=Depends(database.get_db),
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=f"User with user id:{current_user.user_id} posted comment already")
     
     new_comment = models.Comment(comment.comment, user_id = current_user.user_id)
-
+    db.add(new_comment)
     db.commit()
 
     return {"message":"successfully added comment"}
