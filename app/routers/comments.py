@@ -15,3 +15,16 @@ def commenting(comment:schemas.Comments,db:Session=Depends(database.get_db),
 
     if not post_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"Post id {comment.post_id} was not found")
+    
+    comment_query = db.query(models.Comment).filter(models.Comment.post_id == comment.post_id, models.Comment.user_id == current_user.user_id)
+
+    comment_found = comment_query.first()
+
+    if comment_found:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=f"User with user id:{current_user.user_id} posted comment already")
+    
+    new_comment = models.Comment(comment.comment, user_id = current_user.user_id)
+
+    db.commit()
+
+    return {"message":"successfully added comment"}
