@@ -80,6 +80,24 @@ class PostOut(BaseModel):
         from_attributes = True
         arbitrary_types_allowed=True
 
+class CommentOut(BaseModel):
+    comment: str
+    post_id: str
+    user_id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attruibutes = True
+        arbitrary_types_allowed = True
+
+class PostOutWithVotesAndComments(PostOut):
+    votes: int
+    comments: List[CommentOut] = []
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+
 class Vote(BaseModel):
     post_id:int
     dir: int =conint(le=1)
@@ -92,15 +110,4 @@ class PostOutWithVotes(BaseModel):
         from_attributes = True
         arbitrary_types_allowed = True
 
-class CommentOut(BaseModel):
-    comment: str
-    user_id: int
-    created_at: datetime.datetime
 
-class PostOutWithVotesAndComments(PostOut):
-    votes: int
-    comments: List[CommentOut] = []
-
-    class Config:
-        from_attributes = True
-        arbitrary_types_allowed = True

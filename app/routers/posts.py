@@ -10,42 +10,47 @@ from typing import List, Optional
 
 router = APIRouter(tags=["Posts"], prefix="/posts")
 
-@router.get("/",status_code=status.HTTP_200_OK,response_model=List[schemas.PostOutWithVotes])
+@router.get("/", status_code=status.HTTP_200_OK, response_model=List[schemas.PostOutWithVotesAndComments])
 def get_posts(db: Session = Depends(database.get_db),
-              limit:int=100,skip:int=0,search:Optional[str]=""):
+              limit: int = 100, skip: int = 0, search: Optional[str] = ""):
     
+    # Create an alias for the Comment model
     commentAlias = aliased(models.Comment)
-    
+
+    # Perform the query, including outer joins for both votes and comments
     posts = db.query(
-            models.Post, func.count(models.Vote.post_id).label("Votes"),
-            func.array_agg(func.json_build_object(
-                'comment',commentAlias.comment,
-                'user_id',commentAlias.user_id,
-                'created_at',commentAlias.created_at
-            )).label('comments')
-        ).outerjoin(
-            models.Vote,models.Vote.post_id == models.Post.post_id,isouter=True
-        ).group_by(
-            models.Post.post_id
-        ).filter(
-            models.Post.title.ilike(f"%{search}%")
-        ).limit(limit).offset(skip).all()
+        models.Post,
+        func.count(models.Vote.post_id).label("Votes"),
+        func.array_agg(func.json_build_object(
+            'comment', commentAlias.comment,
+            'user_id', commentAlias.user_id,
+            'created_at', commentAlias.created_at
+        )).label('comments')
+    ).outerjoin(
+        models.Vote, models.Vote.post_id == models.Post.post_id, isouter=True
+    ).outerjoin(
+        commentAlias, commentAlias.post_id == models.Post.post_id, isouter=True
+    ).group_by(
+        models.Post.post_id
+    ).filter(
+        models.Post.title.ilike(f"%{search}%")
+    ).limit(limit).offset(skip).all()
 
-    if not posts:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No posts available")
-
+    # Format the result
     result = [
-        schemas.PostOutWithComments(
+        schemas.PostOutWithVotesAndComments(
             post=schemas.PostOut.from_orm(post),
-            votes=post.votes,
-            comments=[schemas.CommentOut(**comment) for comment in post.comments] if post.comments else []
+            votes=votes,
+            comments=[schemas.CommentOut(**comment) for comment in comments] if comments else []
         )
-        for post in posts
+        for post, votes, comments in posts
     ]
 
     return result
 
-@router.get("/{id}",status_code=status.HTTP_200_OK,response_model=schemas.PostOutWithVotes)
+
+
+@router.get("/{id}",status_code=status.HTTP_200_OK,response_model=schemas.PostOutWithVotesAndComments)
 def get_post_id(id:int,db: Session=Depends(database.get_db),
                  current_user : str = Depends(Oauth2.get_current_user)):
     
