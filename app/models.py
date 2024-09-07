@@ -6,11 +6,11 @@ from sqlalchemy.orm import relationship
 class Items(Base):
     __tablename__ = 'MyItems'
 
-    id = Column(Integer,primary_key=True,nullable=False)
-    item_name = Column(String,nullable=False)
-    item_price = Column(Integer,nullable=False)
-    sale = Column(Boolean,nullable=False,server_default=text('false'))
-    created_at = Column(TIMESTAMP(timezone=True),server_default=text('NOW()'),nullable=False)
+class Post(Base):
+    __tablename__ = 'posts'
+    post_id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    comments = relationship("Comment", back_populates="post")
 
 class Post(Base):
     __tablename__ = "Posts"
@@ -39,14 +39,11 @@ class Vote(Base):
 
 
 class Comment(Base):
-    __tablename__ = "Comments"
-    comment = Column(String, nullable = False)
-    user_id = Column(Integer, ForeignKey(column='User.user_id', ondelete="CASCADE"),primary_key=True)
-    post_id = Column(Integer, ForeignKey(column='Posts.post_id',ondelete="CASCADE"),primary_key=True)
-    created_at = Column(TIMESTAMP(timezone=True),server_default=text('NOW()'),nullable=False)
+    __tablename__ = 'comments'
 
-    user = relationship("User")
-    post = relationship("Post")
-
+    comment_id = Column(Integer, primary_key=True, index=True)
+    comment = Column(String)
+    post_id = Column(Integer, ForeignKey('posts.post_id'))
+    post = relationship("Post", back_populates="comments")
 
 

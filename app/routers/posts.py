@@ -17,36 +17,24 @@ def get_posts(db: Session = Depends(database.get_db),
     # Create an alias for the Comment model
     commentAlias = aliased(models.Comment)
 
-    # Perform the query, including outer joins for both votes and comments
     posts = db.query(
-        models.Post,
-        func.count(models.Vote.post_id).label("Votes"),
-        func.array_agg(func.json_build_object(
-            'comment', commentAlias.comment,
-            'user_id', commentAlias.user_id,
-            'created_at', commentAlias.created_at
-        )).label('comments')
-    ).outerjoin(
-        models.Vote, models.Vote.post_id == models.Post.post_id, isouter=True
-    ).outerjoin(
-        commentAlias, commentAlias.post_id == models.Post.post_id, isouter=True
-    ).group_by(
-        models.Post.post_id
-    ).filter(
-        models.Post.title.ilike(f"%{search}%")
-    ).limit(limit).offset(skip).all()
+    models.Post,
+    func.count(models.Vote.post_id).label("Votes"),
+    func.array_agg(func.json_build_object(
+        'comment', commentAlias.comment,
+        'user_id', commentAlias.user_id,
+        'created_at', commentAlias.created_at
+    )).filter(commentAlias.comment != None).label('comments')  # Avoid null comments
+).outerjoin(
+    models.Vote, models.Vote.post_id == models.Post.post_id, isouter=True
+).outerjoin(
+    commentAlias, commentAlias.post_id == models.Post.post_id, isouter=True
+).group_by(
+    models.Post.post_id
+).filter(
+    models.Post.title.ilike(f"%{search}%")
+).limit(limit).offset(skip).all()
 
-    # Format the result
-    result = [
-        schemas.PostOutWithVotesAndComments(
-            post=schemas.PostOut.from_orm(post),
-            votes=votes,
-            comments=[schemas.CommentOut(**comment) for comment in comments] if comments else []
-        )
-        for post, votes, comments in posts
-    ]
-
-    return result
 
 
 

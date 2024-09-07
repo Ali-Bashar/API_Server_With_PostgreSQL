@@ -34,8 +34,8 @@ class CreateUser(BaseModel):
 
 
 class UserOut(BaseModel):
-    user_name:str
-    email:EmailStr
+    user_id:str
+    email:str
     user_id:int
     created_at:datetime
 
@@ -68,35 +68,31 @@ class UpdatePost(PostBase):
     pass
 
 class PostOut(BaseModel):
-    post_id:int
-    title:str
-    content:str
-    published:Optional[bool] = True
-    created_at:datetime
-    owner_id:int
-    owner: UserOut
+    post_id: int
+    title: str
+    content: str
+    owner: UserOut  # Nested Pydantic model
 
     class Config:
-        from_attributes = True
-        arbitrary_types_allowed=True
+        orm_mode = True
+
 
 class CommentOut(BaseModel):
+    comment_id: str
     comment: str
-    post_id: str
     user_id: int
     created_at: datetime.datetime
 
     class Config:
-        from_attruibutes = True
-        arbitrary_types_allowed = True
+        orm_mode = True
 
-class PostOutWithVotesAndComments(PostOut):
+class PostOutWithVotesAndComments(BaseModel):
+    post: PostOut
     votes: int
     comments: List[CommentOut] = []
 
     class Config:
-        from_attributes = True
-        arbitrary_types_allowed = True
+        orm_mode = True
 
 class Vote(BaseModel):
     post_id:int
